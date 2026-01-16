@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build)",
+      "Bash(npx tsc:*)",
+      "Bash(powershell:*)",
+      "Bash(pnpm exec tsc:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(findstr:*)",
+      "Bash(pnpm build)"
+    ]
+  }
+}
