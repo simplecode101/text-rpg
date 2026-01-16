@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import type { Rarity } from './bagStore'
 
 // 任务类型
@@ -192,7 +193,9 @@ const INITIAL_QUESTS: Quest[] = [
 ]
 
 // 创建任务 store
-export const useQuestStore = create<QuestState>((set, get) => ({
+export const useQuestStore = create<QuestState>()(
+  persist(
+    (set, get) => ({
   quests: INITIAL_QUESTS,
 
   getAllQuests: () => {
@@ -265,4 +268,9 @@ export const useQuestStore = create<QuestState>((set, get) => ({
 
     return quest.objectives.every((obj) => obj.current >= obj.required)
   },
-}))
+}),
+    {
+      name: 'quest-storage', // localStorage key
+    }
+  )
+)

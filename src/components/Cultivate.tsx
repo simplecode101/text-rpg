@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { usePlayerStore } from '../stores/playerStore'
 
 interface CultivateProps {
@@ -9,27 +9,30 @@ interface Log {
   id: number
   message: string
   timestamp: number
+  type?: 'normal' | 'breakthrough' | 'failed'
 }
 
 function Cultivate({ onClose }: CultivateProps) {
   const player = usePlayerStore()
   const [logs, setLogs] = useState<Log[]>([])
+  const [isCultivating, setIsCultivating] = useState(false)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  const cultivate = () => {
-    const expGain = Math.floor(Math.random() * 20) + 10
-    const hpGain = Math.floor(Math.random() * 10) + 5
-    const mpGain = Math.floor(Math.random() * 10) + 5
+  // 清理定时器
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+      }
+    }
+  }, [])
 
-    // 更新玩家状态
-    player.addExp(expGain)
-    player.heal(hpGain)
-    player.restoreMp(mpGain)
-
-    // 添加日志
+  const addLog = (message: string, type: 'normal' | 'breakthrough' | 'failed' = 'normal') => {
     const newLog: Log = {
-      id: Date.now(),
-      message: `修炼获得: 经验+${expGain}, 生命+${hpGain}, 法力+${mpGain}`,
+      id: Date.now() + Math.random(),
+      message,
       timestamp: Date.now(),
+      type,
     }
 
     setLogs((prev) => [newLog, ...prev])
@@ -40,6 +43,50 @@ function Cultivate({ onClose }: CultivateProps) {
     }, 5000)
   }
 
+  const cultivate = () => {
+    // 如果在灵感状态，尝试突破
+    if (player.isInspirationState) {
+      const success = player.attemptBreakthrough()
+      if (success) {
+        addLog(`✨ 突破成功！晋升至${player.getRealmDisplay()}！`, 'breakthrough')
+      } else {
+        addLog(`❌ 突破失败，请继续尝试`, 'failed')
+      }
+      return
+    }
+
+    // 正常修炼，只增加经验
+    const expGain = Math.floor(Math.random() * 20) + 10
+
+    player.addExp(expGain)
+
+    addLog(`修炼获得: 经验+${expGain}`)
+  }
+
+  const toggleCultivation = () => {
+    if (isCultivating) {
+      // 停止修炼
+      setIsCultivating(false)
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+      addLog('停止修炼')
+    } else {
+      // 开始修炼
+      setIsCultivating(true)
+      addLog('开始修炼...')
+
+      // 立即修炼一次
+      cultivate()
+
+      // 每0.5秒自动修炼一次
+      intervalRef.current = setInterval(() => {
+        cultivate()
+      }, 500)
+    }
+  }
+
   return (
     <div className="flex flex-col h-full">
       {/* 标题栏 */}
@@ -47,13 +94,13 @@ function Cultivate({ onClose }: CultivateProps) {
         <h3 className="text-lg font-medium" style={{ color: 'rgba(0, 0, 0, 0.87)' }}>修炼系统</h3>
         <div className="flex gap-6 text-sm">
           <div>
-            <span className="font-medium">等级:</span> {player.level}
+            <span className="font-medium">境界:</span> {player.getRealmDisplay()}
           </div>
           <div>
             <span className="font-medium">生命值:</span> {player.hp}/{player.maxHp}
           </div>
           <div>
-            <span className="font-medium">法力值:</span> {player.mp}/{player.maxMp}
+            <span className="font-medium">经验:</span> {player.exp}/{player.maxExp}
           </div>
         </div>
         <button
@@ -65,25 +112,50 @@ function Cultivate({ onClose }: CultivateProps) {
         </button>
       </div>
 
+      {/* 灵感状态提示 */}
+      {player.isInspirationState && (
+        <div className="mx-4 mt-4 p-3 rounded text-center" style={{ backgroundColor: 'rgba(255, 193, 7, 0.1)', border: '1px solid rgba(255, 193, 7, 0.3)' }}>
+          <div style={{ color: '#f57c00', fontWeight: 'bold' }}>✨ 灵感状态 ✨</div>
+          <div className="text-sm mt-1" style={{ color: 'rgba(0, 0, 0, 0.6)' }}>
+            已达境界极限，修炼时将尝试突破（成功率20%）
+          </div>
+        </div>
+      )}
+
       {/* 日志区域 */}
       <div className="flex-1 p-4 overflow-y-auto">
         {logs.length === 0 ? (
-          <div className="text-center" style={{ color: 'rgba(0, 0, 0, 0.38)' }}>开始修炼获取经验...</div>
+          <div className="text-center" style={{ color: 'rgba(0, 0, 0, 0.38)' }}>
+            {isCultivating ? '修炼中...' : '点击修炼按钮开始修炼...'}
+          </div>
         ) : (
           <div className="space-y-2">
-            {logs.map((log) => (
-              <div
-                key={log.id}
-                className="text-sm p-3 rounded transition-opacity duration-1000 shadow-sm"
-                style={{
-                  backgroundColor: 'rgba(0, 0, 0, 0.05)',
-                  color: 'rgba(0, 0, 0, 0.87)',
-                  animation: 'fadeInOut 5s forwards',
-                }}
-              >
-                {log.message}
-              </div>
-            ))}
+            {logs.map((log) => {
+              let bgColor = 'rgba(0, 0, 0, 0.05)'
+              let textColor = 'rgba(0, 0, 0, 0.87)'
+
+              if (log.type === 'breakthrough') {
+                bgColor = 'rgba(76, 175, 80, 0.1)'
+                textColor = '#2e7d32'
+              } else if (log.type === 'failed') {
+                bgColor = 'rgba(244, 67, 54, 0.1)'
+                textColor = '#c62828'
+              }
+
+              return (
+                <div
+                  key={log.id}
+                  className="text-sm p-3 rounded transition-opacity duration-1000 shadow-sm"
+                  style={{
+                    backgroundColor: bgColor,
+                    color: textColor,
+                    animation: 'fadeInOut 5s forwards',
+                  }}
+                >
+                  {log.message}
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
@@ -91,11 +163,16 @@ function Cultivate({ onClose }: CultivateProps) {
       {/* 修炼按钮 */}
       <div className="p-4" style={{ borderTop: '1px solid rgba(0, 0, 0, 0.12)' }}>
         <button
-          className="w-full px-8 py-3 text-lg rounded shadow-sm hover:shadow-md transition-all duration-200 font-medium uppercase tracking-wide"
-          style={{ backgroundColor: '#4caf50', color: '#ffffff' }}
-          onClick={cultivate}
+          className={`w-full px-8 py-3 text-lg rounded shadow-sm hover:shadow-md transition-all duration-200 font-medium uppercase tracking-wide ${
+            isCultivating ? 'bg-red-500' : ''
+          }`}
+          style={{
+            backgroundColor: isCultivating ? '#f44336' : '#4caf50',
+            color: '#ffffff',
+          }}
+          onClick={toggleCultivation}
         >
-          修炼
+          {isCultivating ? '停止修炼' : '开始修炼'}
         </button>
       </div>
 

@@ -1,0 +1,6 @@
+id,name,description,rarity,type,attack,defense,heal,slot,durability,maxDurability,quantity,stackable,questId
+weapon-005,木棍,一根普通的木棍,gray,weapon,5,,,50,50,1,false,,
+food-005,发霉的馒头,已经发霉的馒头,gray,food,,,10,,100,100,true,,
+material-005,废铁,废弃的铁块,gray,material,,,,,200,200,true,,
+food-004,面包,普通的面包,white,food,,,50,,50,50,true,,
+material-004,皮革,普通的兽皮,white,material,,,,,100,100,true,,

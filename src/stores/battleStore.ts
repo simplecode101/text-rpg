@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { Monster } from './monsterStore'
 import type { Skill } from './skillLibraryStore'
+import type { Item } from './bagStore'
 
 // 战斗状态
 type BattleStatus = 'idle' | 'playerTurn' | 'enemyTurn' | 'victory' | 'defeat'
@@ -36,6 +37,13 @@ interface SkillResult {
   message: string
 }
 
+// 战利品信息
+interface BattleLoot {
+  exp: number
+  gold: number
+  items: Item[]
+}
+
 // 战斗状态接口
 interface BattleState {
   inBattle: boolean
@@ -48,6 +56,7 @@ interface BattleState {
   playerBuffs: BattleBuffs
   enemyBuffs: BattleBuffs
   logs: BattleLog[]
+  loot: BattleLoot | null
 
   // 开始战斗
   startBattle: (enemy: Monster, playerMaxHp: number) => void
@@ -87,6 +96,9 @@ interface BattleState {
   // 结束战斗
   endBattle: () => void
 
+  // 设置战利品
+  setLoot: (loot: BattleLoot) => void
+
   // 清空日志
   clearLogs: () => void
 }
@@ -108,6 +120,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     defense: [],
   },
   logs: [],
+  loot: null,
 
   startBattle: (enemy: Monster, playerMaxHp: number) => {
     set({
@@ -127,6 +140,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
           type: 'system',
         },
       ],
+      loot: null,
     })
   },
 
@@ -405,7 +419,12 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       enemyHp: 0,
       playerBuffs: { attack: [], defense: [] },
       enemyBuffs: { attack: [], defense: [] },
+      loot: null,
     })
+  },
+
+  setLoot: (loot: BattleLoot) => {
+    set({ loot })
   },
 
   clearLogs: () => {

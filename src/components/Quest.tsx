@@ -50,7 +50,7 @@ function Quest({ onClose }: QuestProps) {
             <div className="text-sm" style={{ color: 'rgba(0, 0, 0, 0.6)' }}>{quest.description}</div>
             <div className="text-xs mt-1" style={{ color: 'rgba(0, 0, 0, 0.38)' }}>需要等级: {quest.level}</div>
           </div>
-          {quest.status === 'available' && player.level >= quest.level && (
+          {quest.status === 'available' && player.getEffectiveLevel() >= quest.level && (
             <button
               className="px-3 py-1 text-sm rounded shadow-sm hover:shadow-md transition-all duration-200"
               style={{ backgroundColor: '#4caf50', color: '#ffffff' }}

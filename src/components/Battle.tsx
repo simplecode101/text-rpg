@@ -6,7 +6,9 @@ import { useItemLibraryStore } from '../stores/itemLibraryStore'
 import { useSkillStore } from '../stores/skillStore'
 import { useMonsterLibraryStore } from '../stores/monsterStore'
 import BattleAction from './BattleAction'
+import BattleLoot from './BattleLoot'
 import type { Skill } from '../stores/skillLibraryStore'
+import type { Item } from '../stores/bagStore'
 
 interface BattleProps {
   monsterId?: string
@@ -112,6 +114,7 @@ function Battle({ monsterId, onVictory, onDefeat, onFlee }: BattleProps) {
     player.addGold(battle.enemy.goldReward)
 
     // 随机掉落物品
+    const droppedItems: Item[] = []
     const dropChance = Math.random()
     if (dropChance < 0.3) {
       const rarities = ['gray', 'white', 'green', 'blue', 'purple', 'orange'] as const
@@ -127,16 +130,24 @@ function Battle({ monsterId, onVictory, onDefeat, onFlee }: BattleProps) {
       const randomItem = itemLibrary.getRandomItemByRarity(rarity)
       if (randomItem) {
         bag.addItem(randomItem)
+        droppedItems.push(randomItem)
         battle.addLog(`获得了 ${randomItem.name}！`, 'system')
       }
     }
 
     battle.addLog(`获得 ${battle.enemy.expReward} 经验和 ${battle.enemy.goldReward} 金币`, 'system')
 
-    setTimeout(() => {
-      battle.endBattle()
-      onVictory()
-    }, 2000)
+    // 保存战利品信息
+    battle.setLoot({
+      exp: battle.enemy.expReward,
+      gold: battle.enemy.goldReward,
+      items: droppedItems,
+    })
+  }
+
+  const handleClaimLoot = () => {
+    battle.endBattle()
+    onVictory()
   }
 
   const handleDefeat = () => {
@@ -279,7 +290,16 @@ function Battle({ monsterId, onVictory, onDefeat, onFlee }: BattleProps) {
           </div>
         )}
 
-        {battle.status === 'victory' && (
+        {battle.status === 'victory' && battle.loot && (
+          <BattleLoot
+            exp={battle.loot.exp}
+            gold={battle.loot.gold}
+            items={battle.loot.items}
+            onClaim={handleClaimLoot}
+          />
+        )}
+
+        {battle.status === 'victory' && !battle.loot && (
           <div className="text-center">
             <div className="text-2xl font-medium mb-4" style={{ color: '#4caf50' }}>胜利！</div>
             <button

@@ -1,15 +1,30 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import TopBar from '../components/TopBar'
 import ContentArea from '../components/ContentArea'
 import BottomBar from '../components/BottomBar'
+import { useItemLibraryStore } from '../stores/itemLibraryStore'
+import { useBagStore } from '../stores/bagStore'
 
 function Game() {
+  const itemLibrary = useItemLibraryStore()
+  const bag = useBagStore()
   const [showBag, setShowBag] = useState(false)
   const [showCultivate, setShowCultivate] = useState(false)
   const [showExplore, setShowExplore] = useState(false)
   const [showBattle, setShowBattle] = useState(false)
   const [showQuest, setShowQuest] = useState(false)
   const [battleMonsterId, setBattleMonsterId] = useState<string | undefined>()
+
+  // 初始化数据
+  useEffect(() => {
+    const initializeData = async () => {
+      // 初始化物品库
+      await itemLibrary.initializeFromCSV()
+      // 初始化背包
+      await bag.initializeFromCSV()
+    }
+    initializeData()
+  }, [])
 
   const closeAll = () => {
     setShowBag(false)

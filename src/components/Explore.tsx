@@ -66,7 +66,7 @@ function Explore({ onClose, onBattle }: ExploreProps) {
     switch (eventType) {
       case 'monster':
         {
-          const monster = monsterLibrary.getRandomMonster(player.level)
+          const monster = monsterLibrary.getRandomMonster(player.getEffectiveLevel())
           if (monster) {
             addLog(`你遇到了 ${monster.name}！准备战斗！`, 'danger')
             setTimeout(() => {

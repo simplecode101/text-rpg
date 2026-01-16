@@ -7,7 +7,8 @@
       "Bash(pnpm exec tsc:*)",
       "Bash(pnpm lint:*)",
       "Bash(findstr:*)",
-      "Bash(pnpm build)"
+      "Bash(pnpm build)",
+      "Bash(pnpm add:*)"
     ]
   }
 }

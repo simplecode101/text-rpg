@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import Home from '../pages/Home'
 import Game from '../pages/Game'
+import ItemEditor from '../pages/ItemEditor'
 
 export const router = createBrowserRouter([
   {
@@ -14,5 +15,9 @@ export const router = createBrowserRouter([
   {
     path: '/game',
     element: <Game />,
+  },
+  {
+    path: '/item-editor',
+    element: <ItemEditor />,
   },
 ])

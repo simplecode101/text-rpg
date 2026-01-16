@@ -12,7 +12,7 @@ function TopBar() {
       </h2>
       <div className="flex items-center gap-4 text-sm">
         <div className="px-3 py-1 rounded" style={{ backgroundColor: 'rgba(76, 175, 80, 0.1)', color: '#2e7d32' }}>
-          Lv.{player.level}
+          {player.getRealmDisplay()}
         </div>
         <div className="px-3 py-1 rounded" style={{ backgroundColor: 'rgba(244, 67, 54, 0.1)', color: '#c62828' }}>
           HP: {player.hp}/{player.maxHp}

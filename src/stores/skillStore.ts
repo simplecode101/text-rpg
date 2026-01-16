@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import { useSkillLibraryStore, type Skill } from './skillLibraryStore'
 
 // 重新导出 Skill 类型和常量
@@ -48,7 +49,9 @@ interface SkillState {
   forgetSkill: (skillId: string) => void
 }
 
-export const useSkillStore = create<SkillState>((set, get) => ({
+export const useSkillStore = create<SkillState>()(
+  persist(
+    (set, get) => ({
   learnedSkills: {},
 
   learnSkill: (skillId: string) => {
@@ -201,4 +204,9 @@ export const useSkillStore = create<SkillState>((set, get) => ({
       return { learnedSkills: newLearnedSkills }
     })
   },
-}))
+}),
+    {
+      name: 'skill-storage', // localStorage key
+    }
+  )
+)
