@@ -27,20 +27,20 @@ const REALM_ORDER: CultivationRealm[] = [
   '渡劫',
 ]
 
-// 境界配置
+// 境界配置（调整经验需求，让升级更平滑）
 const REALM_CONFIG: Record<
   CultivationRealm,
   { baseExp: number; baseHp: number; baseMp: number; baseAttack: number; baseDefense: number }
 > = {
   练气: { baseExp: 100, baseHp: 100, baseMp: 50, baseAttack: 10, baseDefense: 5 },
-  筑基: { baseExp: 500, baseHp: 200, baseMp: 100, baseAttack: 20, baseDefense: 10 },
-  金丹: { baseExp: 2000, baseHp: 400, baseMp: 200, baseAttack: 40, baseDefense: 20 },
-  元婴: { baseExp: 10000, baseHp: 800, baseMp: 400, baseAttack: 80, baseDefense: 40 },
-  化神: { baseExp: 50000, baseHp: 1600, baseMp: 800, baseAttack: 160, baseDefense: 80 },
-  炼虚: { baseExp: 200000, baseHp: 3200, baseMp: 1600, baseAttack: 320, baseDefense: 160 },
-  合体: { baseExp: 1000000, baseHp: 6400, baseMp: 3200, baseAttack: 640, baseDefense: 320 },
-  大乘: { baseExp: 5000000, baseHp: 12800, baseMp: 6400, baseAttack: 1280, baseDefense: 640 },
-  渡劫: { baseExp: 20000000, baseHp: 25600, baseMp: 12800, baseAttack: 2560, baseDefense: 1280 },
+  筑基: { baseExp: 300, baseHp: 200, baseMp: 100, baseAttack: 20, baseDefense: 10 },
+  金丹: { baseExp: 800, baseHp: 400, baseMp: 200, baseAttack: 40, baseDefense: 20 },
+  元婴: { baseExp: 2000, baseHp: 800, baseMp: 400, baseAttack: 80, baseDefense: 40 },
+  化神: { baseExp: 5000, baseHp: 1600, baseMp: 800, baseAttack: 160, baseDefense: 80 },
+  炼虚: { baseExp: 12000, baseHp: 3200, baseMp: 1600, baseAttack: 320, baseDefense: 160 },
+  合体: { baseExp: 30000, baseHp: 6400, baseMp: 3200, baseAttack: 640, baseDefense: 320 },
+  大乘: { baseExp: 80000, baseHp: 12800, baseMp: 6400, baseAttack: 1280, baseDefense: 640 },
+  渡劫: { baseExp: 200000, baseHp: 25600, baseMp: 12800, baseAttack: 2560, baseDefense: 1280 },
 }
 
 // 装备槽
@@ -80,6 +80,7 @@ interface PlayerState {
   exp: number
   maxExp: number
   isInspirationState: boolean // 是否在灵感状态（3级满经验后）
+  accumulatedExp: number // 灵感状态积累的经验（用于顿悟）
   hp: number
   maxHp: number
   mp: number
@@ -88,6 +89,14 @@ interface PlayerState {
   baseDefense: number
   gold: number
   equipment: EquipmentSlots
+
+  // 寿命系统
+  age: number // 当前年龄
+  maxAge: number // 最大寿命
+  lifespan: number // 剩余寿元
+
+  // 游戏通关状态
+  hasWon: boolean // 是否通关（达到化神境界）
 
   // 每日探索额度
   dailyExploreCount: number
@@ -116,11 +125,29 @@ interface PlayerState {
   // 尝试突破（提升境界）
   attemptBreakthrough: () => boolean
 
+  // 顿悟（消耗积累的经验提升突破概率）
+  attainInsight: () => boolean
+
+  // 获取当前顿悟成功率
+  getInsightSuccessRate: () => number
+
   // 获取境界等级显示文本
   getRealmDisplay: () => string
 
   // 获取等效等级（用于怪物生成等）
   getEffectiveLevel: () => number
+
+  // 设置玩家姓名
+  setName: (name: string) => void
+
+  // 增加年龄（消耗时间）
+  increaseAge: (years: number) => void
+
+  // 增加寿元
+  increaseLifespan: (years: number) => void
+
+  // 检查是否死亡
+  checkDeath: () => boolean
 
   // 恢复生命值
   heal: (amount: number) => void
@@ -205,10 +232,15 @@ export const usePlayerStore = create<PlayerState>()(
         exp: 0,
         maxExp: initialStats.maxExp,
         isInspirationState: false,
+        accumulatedExp: 0, // 灵感状态积累的经验
         hp: initialStats.baseHp,
         maxHp: initialStats.baseHp,
         mp: initialStats.baseMp,
         maxMp: initialStats.baseMp,
+        age: 16, // 初始年龄
+        maxAge: 100, // 初始最大寿命
+        lifespan: 84, // 剩余寿元 (100 - 16)
+        hasWon: false,
         baseAttack: initialStats.baseAttack,
         baseDefense: initialStats.baseDefense,
         gold: 0,
@@ -285,9 +317,11 @@ export const usePlayerStore = create<PlayerState>()(
 
   addExp: (amount: number) => {
     set((state) => {
-      // 如果在灵感状态，经验不再增加
+      // 如果在灵感状态，积累经验到 accumulatedExp
       if (state.isInspirationState) {
-        return state
+        return {
+          accumulatedExp: state.accumulatedExp + amount,
+        }
       }
 
       let newExp = state.exp + amount
@@ -313,6 +347,8 @@ export const usePlayerStore = create<PlayerState>()(
       // 如果升级了，更新属性
       if (newRealmLevel !== state.realmLevel) {
         const stats = calculateRealmStats(state.realm, newRealmLevel)
+        // 每升一级增加5年寿元
+        const lifespanBonus = 5
 
         return {
           exp: newExp,
@@ -326,6 +362,8 @@ export const usePlayerStore = create<PlayerState>()(
           baseDefense: stats.baseDefense,
           attack: stats.baseAttack + (state.equipment.weapon?.attack || 0),
           defense: stats.baseDefense,
+          maxAge: state.maxAge + lifespanBonus,
+          lifespan: state.lifespan + lifespanBonus,
         }
       }
 
@@ -342,6 +380,8 @@ export const usePlayerStore = create<PlayerState>()(
       const stats = calculateRealmStats(state.realm, newRealmLevel)
       const hpDiff = stats.baseHp - state.maxHp
       const mpDiff = stats.baseMp - state.maxMp
+      // 每升一级增加5年寿元
+      const lifespanBonus = 5
 
       return {
         realmLevel: newRealmLevel,
@@ -355,6 +395,8 @@ export const usePlayerStore = create<PlayerState>()(
         baseDefense: stats.baseDefense,
         attack: stats.baseAttack + (state.equipment.weapon?.attack || 0),
         defense: stats.baseDefense,
+        maxAge: state.maxAge + lifespanBonus,
+        lifespan: state.lifespan + lifespanBonus,
       }
     })
   },
@@ -379,6 +421,8 @@ export const usePlayerStore = create<PlayerState>()(
     // 突破成功，进入下一境界1级
     const newRealm = REALM_ORDER[currentRealmIndex + 1]
     const stats = calculateRealmStats(newRealm, 1)
+    // 突破增加20年寿元
+    const lifespanBonus = 20
 
     set({
       realm: newRealm,
@@ -386,6 +430,7 @@ export const usePlayerStore = create<PlayerState>()(
       exp: 0,
       maxExp: stats.maxExp,
       isInspirationState: false, // 重置灵感状态
+      accumulatedExp: 0, // 重置积累经验
       maxHp: stats.baseHp,
       hp: stats.baseHp, // 突破回满血
       maxMp: stats.baseMp,
@@ -394,9 +439,87 @@ export const usePlayerStore = create<PlayerState>()(
       baseDefense: stats.baseDefense,
       attack: stats.baseAttack + (currentState.equipment.weapon?.attack || 0),
       defense: stats.baseDefense,
+      maxAge: currentState.maxAge + lifespanBonus,
+      lifespan: currentState.lifespan + lifespanBonus,
+      hasWon: newRealm === '化神',
     })
 
     return true
+  },
+
+  attainInsight: () => {
+    // 顿悟：消耗积累的经验尝试突破，成功概率基于积累经验
+    // 使用边际效应算法：经验越多，成功率越高，但收益递减
+    const currentState = get()
+
+    if (!currentState.isInspirationState) {
+      return false
+    }
+
+    const currentRealmIndex = REALM_ORDER.indexOf(currentState.realm)
+
+    // 已经是最高境界，无法继续突破
+    if (currentRealmIndex >= REALM_ORDER.length - 1) {
+      return false
+    }
+
+    // 计算成功率：使用对数函数实现边际效应
+    // 基础成功率 5%，每 100 点积累经验增加约 5%
+    // 但使用对数函数让后期收益递减
+    const baseRate = 0.05
+    const expBonus = Math.log10(currentState.accumulatedExp + 1) * 0.15
+    const successRate = Math.min(baseRate + expBonus, 0.95) // 最高 95%
+
+    const success = Math.random() < successRate
+
+    if (success) {
+      // 顿悟成功，突破到下一境界
+      const newRealm = REALM_ORDER[currentRealmIndex + 1]
+      const stats = calculateRealmStats(newRealm, 1)
+      // 突破增加20年寿元
+      const lifespanBonus = 20
+
+      set({
+        realm: newRealm,
+        realmLevel: 1,
+        exp: 0,
+        maxExp: stats.maxExp,
+        isInspirationState: false,
+        accumulatedExp: 0, // 重置积累经验
+        maxHp: stats.baseHp,
+        hp: stats.baseHp,
+        maxMp: stats.baseMp,
+        mp: stats.baseMp,
+        baseAttack: stats.baseAttack,
+        baseDefense: stats.baseDefense,
+        attack: stats.baseAttack + (currentState.equipment.weapon?.attack || 0),
+        defense: stats.baseDefense,
+        maxAge: currentState.maxAge + lifespanBonus,
+        lifespan: currentState.lifespan + lifespanBonus,
+        // 达到化神境界即通关
+        hasWon: newRealm === '化神',
+      })
+    } else {
+      // 顿悟失败，消耗一半积累经验
+      set({
+        accumulatedExp: Math.floor(currentState.accumulatedExp * 0.5),
+      })
+    }
+
+    return success
+  },
+
+  getInsightSuccessRate: () => {
+    const state = get()
+    if (!state.isInspirationState) {
+      return 0
+    }
+
+    const baseRate = 0.05
+    const expBonus = Math.log10(state.accumulatedExp + 1) * 0.15
+    const successRate = Math.min(baseRate + expBonus, 0.95)
+
+    return Math.floor(successRate * 100)
   },
 
   getRealmDisplay: () => {
@@ -440,6 +563,32 @@ export const usePlayerStore = create<PlayerState>()(
     return true
   },
 
+  setName: (name: string) => {
+    set({ name })
+  },
+
+  increaseAge: (years: number) => {
+    set((state) => {
+      const newAge = state.age + years
+      return {
+        age: newAge,
+        lifespan: Math.max(0, state.lifespan - years),
+      }
+    })
+  },
+
+  increaseLifespan: (years: number) => {
+    set((state) => ({
+      maxAge: state.maxAge + years,
+      lifespan: state.lifespan + years,
+    }))
+  },
+
+  checkDeath: () => {
+    const state = get()
+    return state.age >= state.maxAge
+  },
+
   addGold: (amount: number) => {
     set((state) => ({
       gold: state.gold + amount,
@@ -477,10 +626,15 @@ export const usePlayerStore = create<PlayerState>()(
       exp: 0,
       maxExp: initialStats.maxExp,
       isInspirationState: false,
+      accumulatedExp: 0,
       hp: initialStats.baseHp,
       maxHp: initialStats.baseHp,
       mp: initialStats.baseMp,
       maxMp: initialStats.baseMp,
+      age: 16,
+      maxAge: 100,
+      lifespan: 84,
+      hasWon: false,
       baseAttack: initialStats.baseAttack,
       baseDefense: initialStats.baseDefense,
       gold: 0,

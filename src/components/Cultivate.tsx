@@ -44,14 +44,25 @@ function Cultivate({ onClose }: CultivateProps) {
   }
 
   const cultivate = () => {
-    // 如果在灵感状态，尝试突破
-    if (player.isInspirationState) {
-      const success = player.attemptBreakthrough()
-      if (success) {
-        addLog(`✨ 突破成功！晋升至${player.getRealmDisplay()}！`, 'breakthrough')
-      } else {
-        addLog(`❌ 突破失败，请继续尝试`, 'failed')
+    // 检查是否死亡
+    if (player.checkDeath()) {
+      setIsCultivating(false)
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
       }
+      addLog('你已寿元耗尽，无法继续修炼', 'failed')
+      return
+    }
+
+    // 修炼消耗时间（每次修炼增加0.01岁）
+    player.increaseAge(0.01)
+
+    // 如果在灵感状态，积累经验但不增加显示
+    if (player.isInspirationState) {
+      const expGain = Math.floor(Math.random() * 20) + 10
+      player.addExp(expGain)
+      addLog(`修炼获得: 经验+${expGain} (已积累: ${player.accumulatedExp + expGain})`)
       return
     }
 
@@ -61,6 +72,15 @@ function Cultivate({ onClose }: CultivateProps) {
     player.addExp(expGain)
 
     addLog(`修炼获得: 经验+${expGain}`)
+  }
+
+  const handleInsight = () => {
+    const success = player.attainInsight()
+    if (success) {
+      addLog(`✨ 顿悟成功！晋升至${player.getRealmDisplay()}！`, 'breakthrough')
+    } else {
+      addLog(`❌ 顿悟失败，消耗了一半积累经验`, 'failed')
+    }
   }
 
   const toggleCultivation = () => {
@@ -117,7 +137,10 @@ function Cultivate({ onClose }: CultivateProps) {
         <div className="mx-4 mt-4 p-3 rounded text-center" style={{ backgroundColor: 'rgba(255, 193, 7, 0.1)', border: '1px solid rgba(255, 193, 7, 0.3)' }}>
           <div style={{ color: '#f57c00', fontWeight: 'bold' }}>✨ 灵感状态 ✨</div>
           <div className="text-sm mt-1" style={{ color: 'rgba(0, 0, 0, 0.6)' }}>
-            已达境界极限，修炼时将尝试突破（成功率20%）
+            已积累经验: {player.accumulatedExp}
+          </div>
+          <div className="text-sm mt-1" style={{ color: 'rgba(0, 0, 0, 0.6)' }}>
+            当前顿悟成功率: <span style={{ color: '#1976d2', fontWeight: 'bold' }}>{player.getInsightSuccessRate()}%</span>
           </div>
         </div>
       )}
@@ -162,18 +185,42 @@ function Cultivate({ onClose }: CultivateProps) {
 
       {/* 修炼按钮 */}
       <div className="p-4" style={{ borderTop: '1px solid rgba(0, 0, 0, 0.12)' }}>
-        <button
-          className={`w-full px-8 py-3 text-lg rounded shadow-sm hover:shadow-md transition-all duration-200 font-medium uppercase tracking-wide ${
-            isCultivating ? 'bg-red-500' : ''
-          }`}
-          style={{
-            backgroundColor: isCultivating ? '#f44336' : '#4caf50',
-            color: '#ffffff',
-          }}
-          onClick={toggleCultivation}
-        >
-          {isCultivating ? '停止修炼' : '开始修炼'}
-        </button>
+        {player.isInspirationState ? (
+          <div className="flex gap-3">
+            <button
+              className={`flex-1 px-8 py-3 text-lg rounded shadow-sm hover:shadow-md transition-all duration-200 font-medium uppercase tracking-wide ${
+                isCultivating ? 'bg-red-500' : ''
+              }`}
+              style={{
+                backgroundColor: isCultivating ? '#f44336' : '#4caf50',
+                color: '#ffffff',
+              }}
+              onClick={toggleCultivation}
+            >
+              {isCultivating ? '停止修炼' : '开始修炼'}
+            </button>
+            <button
+              className="flex-1 px-8 py-3 text-lg rounded shadow-sm hover:shadow-md transition-all duration-200 font-medium uppercase tracking-wide"
+              style={{ backgroundColor: '#ff9800', color: '#ffffff' }}
+              onClick={handleInsight}
+            >
+              顿悟
+            </button>
+          </div>
+        ) : (
+          <button
+            className={`w-full px-8 py-3 text-lg rounded shadow-sm hover:shadow-md transition-all duration-200 font-medium uppercase tracking-wide ${
+              isCultivating ? 'bg-red-500' : ''
+            }`}
+            style={{
+              backgroundColor: isCultivating ? '#f44336' : '#4caf50',
+              color: '#ffffff',
+            }}
+            onClick={toggleCultivation}
+          >
+            {isCultivating ? '停止修炼' : '开始修炼'}
+          </button>
+        )}
       </div>
 
       {/* 淡出动画样式 */}

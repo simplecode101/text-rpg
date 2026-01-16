@@ -39,11 +39,20 @@ function Explore({ onClose, onBattle }: ExploreProps) {
   }
 
   const explore = () => {
+    // 检查是否死亡
+    if (player.checkDeath()) {
+      addLog('你已寿元耗尽，无法继续探索', 'danger')
+      return
+    }
+
     // 检查每日探索额度
     if (!player.useExplore()) {
       addLog('今日探索次数已用完！', 'danger')
       return
     }
+
+    // 探索消耗时间（每次探索增加0.1岁）
+    player.increaseAge(0.1)
 
     // 随机决定事件类型
     const roll = Math.random()
