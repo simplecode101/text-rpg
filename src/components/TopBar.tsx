@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { usePlayerStore } from '../stores/playerStore'
+import { Button } from './ui/button'
+import { Input } from './ui/input'
+import { Badge } from './ui/badge'
 
 function TopBar() {
   const navigate = useNavigate()
@@ -25,41 +28,31 @@ function TopBar() {
   }
 
   return (
-    <div className="flex justify-between items-center px-4 py-3 shadow-sm" style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.12)' }}>
+    <div className="flex justify-between items-center px-4 py-3 shadow-sm border-b border-black/12">
       <div className="flex items-center gap-3">
         {isEditing ? (
           <div className="flex items-center gap-2">
-            <input
+            <Input
               type="text"
               value={editingName}
               onChange={(e) => setEditingName(e.target.value)}
-              className="px-2 py-1 border rounded text-lg"
-              style={{ borderColor: 'rgba(0, 0, 0, 0.2)' }}
+              className="px-2 py-1 text-lg"
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleNameSave()
                 if (e.key === 'Escape') handleNameCancel()
               }}
             />
-            <button
-              className="px-3 py-1 rounded text-sm"
-              style={{ backgroundColor: '#4caf50', color: '#ffffff' }}
-              onClick={handleNameSave}
-            >
+            <Button size="sm" onClick={handleNameSave}>
               保存
-            </button>
-            <button
-              className="px-3 py-1 rounded text-sm"
-              style={{ backgroundColor: '#f44336', color: '#ffffff' }}
-              onClick={handleNameCancel}
-            >
+            </Button>
+            <Button size="sm" variant="destructive" onClick={handleNameCancel}>
               取消
-            </button>
+            </Button>
           </div>
         ) : (
           <h2
-            className="text-xl font-medium cursor-pointer hover:opacity-70 transition-opacity"
-            style={{ color: 'rgba(0, 0, 0, 0.87)' }}
+            className="text-xl font-medium cursor-pointer hover:opacity-70 transition-opacity text-neutral-700"
             onClick={handleNameClick}
             title="点击修改名字"
           >
@@ -68,35 +61,31 @@ function TopBar() {
         )}
       </div>
       <div className="flex items-center gap-4 text-sm">
-        <div className="px-3 py-1 rounded" style={{ backgroundColor: 'rgba(76, 175, 80, 0.1)', color: '#2e7d32' }}>
+        <Badge variant="secondary" className="bg-green-500/10 text-green-800 hover:bg-green-500/20">
           {player.getRealmDisplay()}
-        </div>
-        <div className="px-3 py-1 rounded" style={{ backgroundColor: 'rgba(156, 39, 176, 0.1)', color: '#7b1fa2' }}>
+        </Badge>
+        <Badge variant="secondary" className="bg-purple-600/10 text-purple-800 hover:bg-purple-600/20">
           寿命: {player.lifespan.toFixed(1)}年
-        </div>
-        <div className="px-3 py-1 rounded" style={{ backgroundColor: 'rgba(244, 67, 54, 0.1)', color: '#c62828' }}>
+        </Badge>
+        <Badge variant="secondary" className="bg-red-500/10 text-red-800 hover:bg-red-500/20">
           HP: {player.hp}/{player.maxHp}
-        </div>
-        <div className="px-3 py-1 rounded" style={{ backgroundColor: 'rgba(33, 150, 243, 0.1)', color: '#1565c0' }}>
+        </Badge>
+        <Badge variant="secondary" className="bg-blue-500/10 text-blue-800 hover:bg-blue-500/20">
           MP: {player.mp}/{player.maxMp}
-        </div>
-        <div className="px-3 py-1 rounded" style={{ backgroundColor: 'rgba(255, 193, 7, 0.1)', color: '#f57f17' }}>
+        </Badge>
+        <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-700 hover:bg-yellow-500/20">
           {player.gold} G
-        </div>
-        <div className="px-3 py-1 rounded" style={{ backgroundColor: 'rgba(255, 152, 0, 0.1)', color: '#ef6c00' }}>
+        </Badge>
+        <Badge variant="secondary" className="bg-orange-500/10 text-orange-700 hover:bg-orange-500/20">
           ⚔ {player.attack}
-        </div>
-        <div className="px-3 py-1 rounded" style={{ backgroundColor: 'rgba(158, 158, 158, 0.1)', color: '#616161' }}>
+        </Badge>
+        <Badge variant="secondary" className="bg-gray-500/10 text-gray-700 hover:bg-gray-500/20">
           🛡 {player.defense}
-        </div>
+        </Badge>
       </div>
-      <button
-        className="px-4 py-2 rounded shadow-sm hover:shadow-md transition-all duration-200 text-sm font-medium"
-        style={{ backgroundColor: '#f44336', color: '#ffffff' }}
-        onClick={() => navigate('/home')}
-      >
+      <Button size="sm" variant="destructive" onClick={() => navigate('/home')}>
         退出
-      </button>
+      </Button>
     </div>
   )
 }

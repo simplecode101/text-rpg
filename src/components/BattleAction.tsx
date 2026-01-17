@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import type { Skill } from '../stores/skillLibraryStore'
 import SkillList from './SkillList'
+import { Button } from './ui/button'
+import { Card, CardContent } from './ui/card'
 
 interface BattleActionProps {
   onAttack: () => void
@@ -38,62 +40,51 @@ function BattleAction({ onAttack, onUseSkill, onFlee, disabled, isEnemyTurn }: B
 
   if (selectedAction === 'skill') {
     return (
-      <div className="p-4 rounded shadow-sm" style={{ backgroundColor: 'rgba(0, 0, 0, 0.02)', border: '1px solid rgba(0, 0, 0, 0.12)' }}>
-        <div className="flex justify-between items-center mb-3">
-          <div className="text-lg font-medium" style={{ color: 'rgba(0, 0, 0, 0.87)' }}>
-            选择技能
+      <Card className="bg-black/2">
+        <CardContent className="p-4">
+          <div className="flex justify-between items-center mb-3">
+            <div className="text-lg font-medium text-neutral-700">
+              选择技能
+            </div>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setSelectedAction(null)}
+            >
+              返回
+            </Button>
           </div>
-          <button
-            className="px-3 py-1 rounded text-sm"
-            style={{ backgroundColor: 'rgba(0, 0, 0, 0.04)', color: 'rgba(0, 0, 0, 0.6)' }}
-            onClick={() => setSelectedAction(null)}
-          >
-            返回
-          </button>
-        </div>
-        <SkillList onUseSkill={handleSkillSelect} disabled={disabled || isEnemyTurn} />
-      </div>
+          <SkillList onUseSkill={handleSkillSelect} disabled={disabled || isEnemyTurn} />
+        </CardContent>
+      </Card>
     )
   }
 
   return (
     <div className="flex gap-4 justify-center">
-      <button
-        className="px-6 py-3 rounded shadow-sm hover:shadow-md transition-all duration-200 font-medium uppercase tracking-wide"
-        style={{
-          backgroundColor: disabled || isEnemyTurn ? '#9e9e9e' : '#f44336',
-          color: '#ffffff',
-          cursor: disabled || isEnemyTurn ? 'not-allowed' : 'pointer',
-        }}
+      <Button
+        size="lg"
+        variant="destructive"
         onClick={() => handleActionClick('attack')}
         disabled={disabled || isEnemyTurn}
       >
         攻击
-      </button>
-      <button
-        className="px-6 py-3 rounded shadow-sm hover:shadow-md transition-all duration-200 font-medium uppercase tracking-wide"
-        style={{
-          backgroundColor: disabled || isEnemyTurn ? '#9e9e9e' : '#2196f3',
-          color: '#ffffff',
-          cursor: disabled || isEnemyTurn ? 'not-allowed' : 'pointer',
-        }}
+      </Button>
+      <Button
+        size="lg"
         onClick={() => handleActionClick('skill')}
         disabled={disabled || isEnemyTurn}
       >
         技能
-      </button>
-      <button
-        className="px-6 py-3 rounded shadow-sm hover:shadow-md transition-all duration-200 font-medium uppercase tracking-wide"
-        style={{
-          backgroundColor: disabled || isEnemyTurn ? '#9e9e9e' : 'rgba(0, 0, 0, 0.38)',
-          color: '#ffffff',
-          cursor: disabled || isEnemyTurn ? 'not-allowed' : 'pointer',
-        }}
+      </Button>
+      <Button
+        size="lg"
+        variant="secondary"
         onClick={() => handleActionClick('flee')}
         disabled={disabled || isEnemyTurn}
       >
         逃跑
-      </button>
+      </Button>
     </div>
   )
 }

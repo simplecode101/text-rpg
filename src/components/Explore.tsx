@@ -3,6 +3,8 @@ import { usePlayerStore } from '../stores/playerStore'
 import { useBagStore } from '../stores/bagStore'
 import { useItemLibraryStore } from '../stores/itemLibraryStore'
 import { useMonsterLibraryStore } from '../stores/monsterStore'
+import { Button } from './ui/button'
+import { ScrollArea } from './ui/scroll-area'
 
 interface ExploreProps {
   onClose: () => void
@@ -119,89 +121,68 @@ function Explore({ onClose, onBattle }: ExploreProps) {
   const getLogColor = (type: Log['type']) => {
     switch (type) {
       case 'success':
-        return { backgroundColor: 'rgba(76, 175, 80, 0.1)', color: '#2e7d32' }
+        return 'bg-green-500/10 text-green-800'
       case 'danger':
-        return { backgroundColor: 'rgba(244, 67, 54, 0.1)', color: '#c62828' }
+        return 'bg-red-500/10 text-red-800'
       case 'warning':
-        return { backgroundColor: 'rgba(255, 152, 0, 0.1)', color: '#ef6c00' }
+        return 'bg-orange-500/10 text-orange-700'
       default:
-        return { backgroundColor: 'rgba(0, 0, 0, 0.05)', color: 'rgba(0, 0, 0, 0.87)' }
+        return 'bg-black/5 text-neutral-700'
     }
   }
 
   return (
     <div className="flex flex-col h-full">
       {/* 探索信息 */}
-      <div className="flex items-center justify-between p-4" style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.12)' }}>
+      <div className="flex items-center justify-between p-4 border-b border-black/12">
         <div>
-          <h3 className="text-lg font-medium mb-2" style={{ color: 'rgba(0, 0, 0, 0.87)' }}>探索系统</h3>
-          <div className="text-sm" style={{ color: 'rgba(0, 0, 0, 0.6)' }}>
+          <h3 className="text-lg font-medium mb-2 text-neutral-700">探索系统</h3>
+          <div className="text-sm text-black/60">
             <div>剩余探索次数: {player.getRemainingExplores()}/{player.maxDailyExplores}</div>
             <div>每日探索次数会在0点重置</div>
           </div>
         </div>
-        <button
-          className="px-4 py-2 rounded-full transition-all duration-200"
-          style={{ color: 'rgba(0, 0, 0, 0.54)' }}
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={onClose}
         >
           ✕
-        </button>
+        </Button>
       </div>
 
       {/* 日志区域 */}
-      <div className="flex-1 p-4 overflow-y-auto">
-        {logs.length === 0 ? (
-          <div className="text-center" style={{ color: 'rgba(0, 0, 0, 0.38)' }}>点击探索按钮开始冒险...</div>
-        ) : (
-          <div className="space-y-2">
-            {logs.map((log) => (
-              <div
-                key={log.id}
-                className="text-sm p-3 rounded transition-opacity duration-1000 shadow-sm"
-                style={{
-                  ...getLogColor(log.type),
-                  animation: 'fadeInOut 5s forwards',
-                }}
-              >
-                {log.message}
-              </div>
-            ))}
-          </div>
-        )}
+      <div className="flex-1 p-4">
+        <ScrollArea className="h-full">
+          {logs.length === 0 ? (
+            <div className="text-center text-black/38 py-8">点击探索按钮开始冒险...</div>
+          ) : (
+            <div className="space-y-2">
+              {logs.map((log) => (
+                <div
+                  key={log.id}
+                  className={`text-sm p-3 rounded transition-opacity duration-1000 shadow-sm ${getLogColor(log.type)}`}
+                >
+                  {log.message}
+                </div>
+              ))}
+            </div>
+          )}
+        </ScrollArea>
       </div>
 
       {/* 探索按钮 */}
-      <div className="p-4" style={{ borderTop: '1px solid rgba(0, 0, 0, 0.12)' }}>
-        <button
-          className="w-full px-8 py-3 text-lg rounded shadow-sm hover:shadow-md transition-all duration-200 font-medium uppercase tracking-wide"
-          style={{ backgroundColor: '#ff9800', color: '#ffffff' }}
+      <div className="p-4 border-t border-black/12">
+        <Button
+          className="w-full"
+          size="lg"
+          variant="default"
           onClick={explore}
           disabled={player.getRemainingExplores() <= 0}
         >
           探索
-        </button>
+        </Button>
       </div>
-
-      {/* 淡出动画样式 */}
-      <style>{`
-        @keyframes fadeInOut {
-          0% {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          10% {
-            opacity: 1;
-            transform: translateY(0);
-          }
-          80% {
-            opacity: 1;
-          }
-          100% {
-            opacity: 0;
-          }
-        }
-      `}</style>
     </div>
   )
 }

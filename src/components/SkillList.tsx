@@ -1,6 +1,8 @@
 import { useSkillStore } from '../stores/skillStore'
 import { useSkillLibraryStore } from '../stores/skillLibraryStore'
 import { usePlayerStore } from '../stores/playerStore'
+import { Button } from './ui/button'
+import { Badge } from './ui/badge'
 import type { Skill } from '../stores/skillLibraryStore'
 
 interface SkillListProps {
@@ -32,32 +34,18 @@ function SkillList({ onUseSkill, disabled }: SkillListProps) {
     onUseSkill(skill)
   }
 
-  const getSkillButtonStyle = (playerSkill: { id: string; learnedLevel: number; currentCooldown: number }) => {
-    const skill = getSkillFromLibrary(playerSkill)
-    if (!skill) return { opacity: 0.5, cursor: 'not-allowed' }
-
-    const isOnCooldown = playerSkill.currentCooldown > 0
-    const notEnoughMp = player.mp < skill.mpCost
-
-    if (isOnCooldown || notEnoughMp || disabled) {
-      return { opacity: 0.5, cursor: 'not-allowed' as const }
-    }
-
-    return { opacity: 1, cursor: 'pointer' as const }
-  }
-
   const getSkillTypeColor = (type: string) => {
     switch (type) {
       case 'attack':
-        return '#f44336'
+        return 'border-red-500'
       case 'heal':
-        return '#4caf50'
+        return 'border-green-500'
       case 'buff':
-        return '#2196f3'
+        return 'border-blue-500'
       case 'debuff':
-        return '#9c27b0'
+        return 'border-purple-600'
       default:
-        return '#757575'
+        return 'border-gray-600'
     }
   }
 
@@ -69,43 +57,42 @@ function SkillList({ onUseSkill, disabled }: SkillListProps) {
 
         const isOnCooldown = playerSkill.currentCooldown > 0
         const notEnoughMp = player.mp < skill.mpCost
+        const isDisabled = isOnCooldown || notEnoughMp || disabled
 
         return (
-          <button
+          <Button
             key={skill.id}
-            className="p-3 rounded shadow-sm hover:shadow-md transition-all duration-200 text-left disabled:cursor-not-allowed"
-            style={{
-              ...getSkillButtonStyle(playerSkill),
-              backgroundColor: 'rgba(0, 0, 0, 0.02)',
-              border: `1px solid ${getSkillTypeColor(skill.type)}`,
-            }}
+            variant="outline"
+            className={`h-auto p-3 justify-start text-left ${getSkillTypeColor(skill.type)} ${isDisabled ? 'opacity-50' : ''}`}
             onClick={() => handleSkillClick(playerSkill)}
-            disabled={isOnCooldown || notEnoughMp || disabled}
+            disabled={isDisabled}
           >
-            <div className="flex justify-between items-start mb-1">
-              <div className="text-sm font-medium" style={{ color: 'rgba(0, 0, 0, 0.87)' }}>
-                {skill.name}
-              </div>
-              {isOnCooldown && (
-                <div className="text-xs px-2 py-0.5 rounded" style={{ backgroundColor: '#ff9800', color: '#fff' }}>
-                  {playerSkill.currentCooldown}
+            <div className="w-full">
+              <div className="flex justify-between items-start mb-1">
+                <div className="text-sm font-medium text-neutral-700">
+                  {skill.name}
                 </div>
-              )}
-            </div>
-            <div className="text-xs mb-2" style={{ color: 'rgba(0, 0, 0, 0.6)' }}>
-              {skill.description}
-            </div>
-            <div className="flex justify-between items-center text-xs">
-              <div style={{ color: notEnoughMp ? '#f44336' : '#2196f3' }}>
-                法力: {skill.mpCost}
+                {isOnCooldown && (
+                  <Badge variant="secondary" className="bg-orange-500 text-white">
+                    {playerSkill.currentCooldown}
+                  </Badge>
+                )}
               </div>
-              {skill.cooldown > 0 && (
-                <div style={{ color: 'rgba(0, 0, 0, 0.38)' }}>
-                  冷却: {skill.cooldown}回合
+              <div className="text-xs mb-2 text-black/60">
+                {skill.description}
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <div className={notEnoughMp ? 'text-red-500' : 'text-blue-500'}>
+                  法力: {skill.mpCost}
                 </div>
-              )}
+                {skill.cooldown > 0 && (
+                  <div className="text-black/38">
+                    冷却: {skill.cooldown}回合
+                  </div>
+                )}
+              </div>
             </div>
-          </button>
+          </Button>
         )
       })}
     </div>

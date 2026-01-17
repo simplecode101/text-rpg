@@ -9,6 +9,8 @@ import BattleAction from './BattleAction'
 import BattleLoot from './BattleLoot'
 import type { Skill } from '../stores/skillLibraryStore'
 import type { Item } from '../stores/bagStore'
+import { Progress } from './ui/progress'
+import { Badge } from './ui/badge'
 
 interface BattleProps {
   monsterId?: string
@@ -161,29 +163,10 @@ function Battle({ monsterId, onVictory, onDefeat, onFlee }: BattleProps) {
     }, 2000)
   }
 
-  const getLogStyle = (type: string) => {
-    switch (type) {
-      case 'player':
-        return { color: '#1976d2' }
-      case 'enemy':
-        return { color: '#d32f2f' }
-      case 'critical':
-        return { color: '#f57c00', fontWeight: 'bold' }
-      case 'heal':
-        return { color: '#4caf50' }
-      case 'buff':
-        return { color: '#2196f3' }
-      case 'system':
-        return { color: '#388e3c' }
-      default:
-        return { color: 'rgba(0, 0, 0, 0.6)' }
-    }
-  }
-
   if (!battle.inBattle || !battle.enemy) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div style={{ color: 'rgba(0, 0, 0, 0.38)' }}>准备战斗...</div>
+        <div className="text-black/38">准备战斗...</div>
       </div>
     )
   }
@@ -211,7 +194,7 @@ function Battle({ monsterId, onVictory, onDefeat, onFlee }: BattleProps) {
     <div className="flex flex-col h-full p-4">
       {/* 回合信息 */}
       {battle.status !== 'victory' && battle.status !== 'defeat' && (
-        <div className="text-center mb-2" style={{ color: 'rgba(0, 0, 0, 0.6)' }}>
+        <div className="text-center mb-2 text-black/60">
           回合 {battle.turnCount} - {battle.currentTurn === 'player' ? '你的回合' : '敌人回合'}
         </div>
       )}
@@ -220,53 +203,43 @@ function Battle({ monsterId, onVictory, onDefeat, onFlee }: BattleProps) {
       <div className="flex justify-between items-start mb-4">
         {/* 玩家信息 */}
         <div className="flex-1">
-          <div className="text-lg font-medium mb-2" style={{ color: 'rgba(0, 0, 0, 0.87)' }}>{player.name}</div>
-          <div className="text-sm mb-1" style={{ color: 'rgba(0, 0, 0, 0.6)' }}>
+          <div className="text-lg font-medium mb-2 text-neutral-700">{player.name}</div>
+          <div className="text-sm mb-1 text-black/60">
             HP: {battle.playerHp}/{player.maxHp} | MP: {player.mp}/{player.maxMp}
           </div>
-          <div className="w-full rounded-full h-4 shadow-sm mb-1" style={{ backgroundColor: 'rgba(0, 0, 0, 0.12)' }}>
-            <div
-              className="h-4 rounded-full transition-all"
-              style={{ width: `${playerHpPercent}%`, backgroundColor: '#4caf50' }}
-            />
-          </div>
+          <Progress value={playerHpPercent} className="h-4 mb-1" />
           {Object.values(battle.playerBuffs).some((b) => b.length > 0) && (
-            <div className="text-xs mt-1" style={{ color: '#2196f3' }}>
+            <Badge variant="secondary" className="mt-1 bg-blue-500/10 text-blue-500">
               Buff: {formatBuffs(battle.playerBuffs)}
-            </div>
+            </Badge>
           )}
-          <div className="text-xs mt-2" style={{ color: 'rgba(0, 0, 0, 0.38)' }}>
+          <div className="text-xs mt-2 text-black/38">
             攻击: {displayPlayerAttack} | 防御: {displayPlayerDefense}
           </div>
         </div>
 
-        <div className="text-2xl mx-4" style={{ color: 'rgba(0, 0, 0, 0.38)' }}>VS</div>
+        <div className="text-2xl mx-4 text-black/38">VS</div>
 
         {/* 敌人信息 */}
         <div className="flex-1 text-right">
           <div className={`text-lg font-medium mb-2 ${RARITY_COLOR[battle.enemy.rarity]}`}>
             {battle.enemy.name}
           </div>
-          <div className="text-sm mb-1" style={{ color: 'rgba(0, 0, 0, 0.6)' }}>
+          <div className="text-sm mb-1 text-black/60">
             HP: {battle.enemyHp}/{battle.enemy.maxHp}
           </div>
-          <div className="w-full rounded-full h-4 shadow-sm ml-auto" style={{ backgroundColor: 'rgba(0, 0, 0, 0.12)' }}>
-            <div
-              className="h-4 rounded-full transition-all"
-              style={{ width: `${enemyHpPercent}%`, backgroundColor: '#f44336' }}
-            />
-          </div>
-          <div className="text-xs mt-2" style={{ color: 'rgba(0, 0, 0, 0.38)' }}>
+          <Progress value={enemyHpPercent} className="h-4 ml-auto bg-red-500" />
+          <div className="text-xs mt-2 text-black/38">
             攻击: {battle.enemy.attack} | 防御: {battle.enemy.defense}
           </div>
         </div>
       </div>
 
       {/* 战斗日志 */}
-      <div className="flex-1 overflow-y-auto rounded p-3 mb-4 shadow-sm" style={{ backgroundColor: 'rgba(0, 0, 0, 0.02)', border: '1px solid rgba(0, 0, 0, 0.12)' }}>
+      <div className="flex-1 overflow-y-auto rounded p-3 mb-4 shadow-sm bg-black/2 border border-black/12">
         <div className="space-y-1">
           {battle.logs.slice(-10).map((log) => (
-            <div key={log.id} className="text-sm" style={getLogStyle(log.type)}>
+            <div key={log.id} className={`text-sm ${LOG_COLORS[log.type] || 'text-black/60'}`}>
               {log.message}
             </div>
           ))}
@@ -285,7 +258,7 @@ function Battle({ monsterId, onVictory, onDefeat, onFlee }: BattleProps) {
         )}
 
         {battle.status === 'enemyTurn' && (
-          <div className="text-center py-3" style={{ color: 'rgba(0, 0, 0, 0.6)' }}>
+          <div className="text-center py-3 text-black/60">
             敌人行动中...
           </div>
         )}
@@ -301,27 +274,25 @@ function Battle({ monsterId, onVictory, onDefeat, onFlee }: BattleProps) {
 
         {battle.status === 'victory' && !battle.loot && (
           <div className="text-center">
-            <div className="text-2xl font-medium mb-4" style={{ color: '#4caf50' }}>胜利！</div>
-            <button
-              className="px-6 py-3 rounded shadow-sm hover:shadow-md transition-all duration-200 font-medium uppercase tracking-wide"
-              style={{ backgroundColor: '#1976d2', color: '#ffffff' }}
+            <div className="text-2xl font-medium mb-4 text-green-500">胜利！</div>
+            <Button
+              size="lg"
               onClick={handleVictory}
             >
               继续冒险
-            </button>
+            </Button>
           </div>
         )}
 
         {battle.status === 'defeat' && (
           <div className="text-center">
-            <div className="text-2xl font-medium mb-4" style={{ color: '#d32f2f' }}>失败...</div>
-            <button
-              className="px-6 py-3 rounded shadow-sm hover:shadow-md transition-all duration-200 font-medium uppercase tracking-wide"
-              style={{ backgroundColor: '#1976d2', color: '#ffffff' }}
+            <div className="text-2xl font-medium mb-4 text-red-600">失败...</div>
+            <Button
+              size="lg"
               onClick={handleDefeat}
             >
               返回
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -336,6 +307,15 @@ const RARITY_COLOR: Record<string, string> = {
   green: 'text-green-500',
   white: 'text-gray-500',
   gray: 'text-gray-400',
+}
+
+const LOG_COLORS: Record<string, string> = {
+  player: 'text-blue-600',
+  enemy: 'text-red-600',
+  critical: 'text-orange-600 font-bold',
+  heal: 'text-green-500',
+  buff: 'text-blue-500',
+  system: 'text-green-700',
 }
 
 export default Battle

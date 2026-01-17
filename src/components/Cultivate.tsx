@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { usePlayerStore } from '../stores/playerStore'
+import { Button } from './ui/button'
+import { ScrollArea } from './ui/scroll-area'
 
 interface CultivateProps {
   onClose: () => void
@@ -110,8 +112,8 @@ function Cultivate({ onClose }: CultivateProps) {
   return (
     <div className="flex flex-col h-full">
       {/* 标题栏 */}
-      <div className="flex items-center justify-between p-4" style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.12)' }}>
-        <h3 className="text-lg font-medium" style={{ color: 'rgba(0, 0, 0, 0.87)' }}>修炼系统</h3>
+      <div className="flex items-center justify-between p-4 border-b border-black/12">
+        <h3 className="text-lg font-medium text-neutral-700">修炼系统</h3>
         <div className="flex gap-6 text-sm">
           <div>
             <span className="font-medium">境界:</span> {player.getRealmDisplay()}
@@ -123,125 +125,92 @@ function Cultivate({ onClose }: CultivateProps) {
             <span className="font-medium">经验:</span> {player.exp}/{player.maxExp}
           </div>
         </div>
-        <button
-          className="px-4 py-2 rounded-full transition-all duration-200"
-          style={{ color: 'rgba(0, 0, 0, 0.54)' }}
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={onClose}
         >
           ✕
-        </button>
+        </Button>
       </div>
 
       {/* 灵感状态提示 */}
       {player.isInspirationState && (
-        <div className="mx-4 mt-4 p-3 rounded text-center" style={{ backgroundColor: 'rgba(255, 193, 7, 0.1)', border: '1px solid rgba(255, 193, 7, 0.3)' }}>
-          <div style={{ color: '#f57c00', fontWeight: 'bold' }}>✨ 灵感状态 ✨</div>
-          <div className="text-sm mt-1" style={{ color: 'rgba(0, 0, 0, 0.6)' }}>
+        <div className="mx-4 mt-4 p-3 rounded text-center bg-yellow-500/10 border border-yellow-500/30">
+          <div className="font-bold text-orange-600">✨ 灵感状态 ✨</div>
+          <div className="text-sm mt-1 text-black/60">
             已积累经验: {player.accumulatedExp}
           </div>
-          <div className="text-sm mt-1" style={{ color: 'rgba(0, 0, 0, 0.6)' }}>
-            当前顿悟成功率: <span style={{ color: '#1976d2', fontWeight: 'bold' }}>{player.getInsightSuccessRate()}%</span>
+          <div className="text-sm mt-1 text-black/60">
+            当前顿悟成功率: <span className="font-bold text-blue-600">{player.getInsightSuccessRate()}%</span>
           </div>
         </div>
       )}
 
       {/* 日志区域 */}
-      <div className="flex-1 p-4 overflow-y-auto">
-        {logs.length === 0 ? (
-          <div className="text-center" style={{ color: 'rgba(0, 0, 0, 0.38)' }}>
-            {isCultivating ? '修炼中...' : '点击修炼按钮开始修炼...'}
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {logs.map((log) => {
-              let bgColor = 'rgba(0, 0, 0, 0.05)'
-              let textColor = 'rgba(0, 0, 0, 0.87)'
+      <div className="flex-1 p-4">
+        <ScrollArea className="h-full">
+          {logs.length === 0 ? (
+            <div className="text-center text-black/38 py-8">
+              {isCultivating ? '修炼中...' : '点击修炼按钮开始修炼...'}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {logs.map((log) => {
+                let bgColorClass = 'bg-black/5 text-neutral-700'
 
-              if (log.type === 'breakthrough') {
-                bgColor = 'rgba(76, 175, 80, 0.1)'
-                textColor = '#2e7d32'
-              } else if (log.type === 'failed') {
-                bgColor = 'rgba(244, 67, 54, 0.1)'
-                textColor = '#c62828'
-              }
+                if (log.type === 'breakthrough') {
+                  bgColorClass = 'bg-green-500/10 text-green-800'
+                } else if (log.type === 'failed') {
+                  bgColorClass = 'bg-red-500/10 text-red-800'
+                }
 
-              return (
-                <div
-                  key={log.id}
-                  className="text-sm p-3 rounded transition-opacity duration-1000 shadow-sm"
-                  style={{
-                    backgroundColor: bgColor,
-                    color: textColor,
-                    animation: 'fadeInOut 5s forwards',
-                  }}
-                >
-                  {log.message}
-                </div>
-              )
-            })}
-          </div>
-        )}
+                return (
+                  <div
+                    key={log.id}
+                    className={`text-sm p-3 rounded transition-opacity duration-1000 shadow-sm ${bgColorClass}`}
+                  >
+                    {log.message}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </ScrollArea>
       </div>
 
       {/* 修炼按钮 */}
-      <div className="p-4" style={{ borderTop: '1px solid rgba(0, 0, 0, 0.12)' }}>
+      <div className="p-4 border-t border-black/12">
         {player.isInspirationState ? (
           <div className="flex gap-3">
-            <button
-              className={`flex-1 px-8 py-3 text-lg rounded shadow-sm hover:shadow-md transition-all duration-200 font-medium uppercase tracking-wide ${
-                isCultivating ? 'bg-red-500' : ''
-              }`}
-              style={{
-                backgroundColor: isCultivating ? '#f44336' : '#4caf50',
-                color: '#ffffff',
-              }}
+            <Button
+              className="flex-1"
+              size="lg"
+              variant={isCultivating ? 'destructive' : 'default'}
               onClick={toggleCultivation}
             >
               {isCultivating ? '停止修炼' : '开始修炼'}
-            </button>
-            <button
-              className="flex-1 px-8 py-3 text-lg rounded shadow-sm hover:shadow-md transition-all duration-200 font-medium uppercase tracking-wide"
-              style={{ backgroundColor: '#ff9800', color: '#ffffff' }}
+            </Button>
+            <Button
+              className="flex-1"
+              size="lg"
+              variant="secondary"
               onClick={handleInsight}
             >
               顿悟
-            </button>
+            </Button>
           </div>
         ) : (
-          <button
-            className={`w-full px-8 py-3 text-lg rounded shadow-sm hover:shadow-md transition-all duration-200 font-medium uppercase tracking-wide ${
-              isCultivating ? 'bg-red-500' : ''
-            }`}
-            style={{
-              backgroundColor: isCultivating ? '#f44336' : '#4caf50',
-              color: '#ffffff',
-            }}
+          <Button
+            className="w-full"
+            size="lg"
+            variant={isCultivating ? 'destructive' : 'default'}
             onClick={toggleCultivation}
           >
             {isCultivating ? '停止修炼' : '开始修炼'}
-          </button>
+          </Button>
         )}
       </div>
-
-      {/* 淡出动画样式 */}
-      <style>{`
-        @keyframes fadeInOut {
-          0% {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          10% {
-            opacity: 1;
-            transform: translateY(0);
-          }
-          80% {
-            opacity: 1;
-          }
-          100% {
-            opacity: 0;
-          }
-        }
-      `}</style>
     </div>
   )
 }
