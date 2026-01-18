@@ -1,86 +1,126 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import TopBar from '../components/TopBar'
 import ContentArea from '../components/ContentArea'
-import BottomBar from '../components/BottomBar'
+import Bag from '../components/Bag'
+import Cultivate from '../components/Cultivate'
+import Explore from '../components/Explore'
+import Battle from '../components/Battle'
+import Quest from '../components/Quest'
 import { useItemLibraryStore } from '../stores/itemLibraryStore'
 import { useBagStore } from '../stores/bagStore'
+import { Button } from '../components/ui/button'
+import { Package, Sparkles, Compass, ScrollText, LogOut } from 'lucide-react'
+
+type ActivePanel = 'bag' | 'cultivate' | 'explore' | 'battle' | 'quest' | null
 
 function Game() {
+  const navigate = useNavigate()
   const itemLibrary = useItemLibraryStore()
   const bag = useBagStore()
-  const [showBag, setShowBag] = useState(false)
-  const [showCultivate, setShowCultivate] = useState(false)
-  const [showExplore, setShowExplore] = useState(false)
-  const [showBattle, setShowBattle] = useState(false)
-  const [showQuest, setShowQuest] = useState(false)
-  const [battleMonsterId, setBattleMonsterId] = useState<string | undefined>()
+  const [activePanel, setActivePanel] = useState<ActivePanel>(null)
+  const [battleMonsterId, setBattleMonsterId] = useState<string>()
 
-  // 初始化数据
   useEffect(() => {
     const initializeData = async () => {
-      // 初始化物品库
       await itemLibrary.initializeFromCSV()
-      // 初始化背包
       await bag.initializeFromCSV()
     }
     initializeData()
   }, [])
 
-  const closeAll = () => {
-    setShowBag(false)
-    setShowCultivate(false)
-    setShowExplore(false)
-    setShowBattle(false)
-    setShowQuest(false)
-    setBattleMonsterId(undefined)
-  }
-
   const handleBattle = (monsterId: string) => {
     setBattleMonsterId(monsterId)
-    setShowBattle(true)
+    setActivePanel('battle')
   }
 
   const handleBattleEnd = () => {
-    setShowBattle(false)
     setBattleMonsterId(undefined)
-    setShowExplore(true)
+    setActivePanel('explore')
+  }
+
+  const handleClose = () => {
+    setActivePanel(null)
+  }
+
+  const renderContent = () => {
+    switch (activePanel) {
+      case 'battle':
+        return (
+          <Battle
+            monsterId={battleMonsterId}
+            onVictory={handleBattleEnd}
+            onDefeat={handleBattleEnd}
+            onFlee={handleBattleEnd}
+          />
+        )
+      case 'bag':
+        return <Bag />
+      case 'cultivate':
+        return <Cultivate />
+      case 'explore':
+        return <Explore onBattle={handleBattle} />
+      case 'quest':
+        return <Quest />
+      default:
+        return (
+          <div className="flex items-center justify-center h-full">
+            <div className="flex flex-col gap-3 w-full max-w-md">
+              <Button
+                size="lg"
+                variant="outline"
+                className="h-16 flex-row gap-3 text-base justify-center"
+                onClick={() => setActivePanel('bag')}
+              >
+                <Package className="w-6 h-6" />
+                背包
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="h-16 flex-row gap-3 text-base justify-center"
+                onClick={() => setActivePanel('cultivate')}
+              >
+                <Sparkles className="w-6 h-6" />
+                修炼
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="h-16 flex-row gap-3 text-base justify-center"
+                onClick={() => setActivePanel('explore')}
+              >
+                <Compass className="w-6 h-6" />
+                探索
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="h-16 flex-row gap-3 text-base justify-center"
+                onClick={() => setActivePanel('quest')}
+              >
+                <ScrollText className="w-6 h-6" />
+                任务
+              </Button>
+              <Button
+                size="lg"
+                variant="destructive"
+                className="h-16 flex-row gap-3 text-base justify-center"
+                onClick={() => navigate('/home')}
+              >
+                <LogOut className="w-6 h-6" />
+                退出游戏
+              </Button>
+            </div>
+          </div>
+        )
+    }
   }
 
   return (
     <div className="flex flex-col h-screen">
-      <TopBar />
-      <ContentArea
-        showBag={showBag}
-        onCloseBag={closeAll}
-        showCultivate={showCultivate}
-        onCloseCultivate={closeAll}
-        showExplore={showExplore}
-        onCloseExplore={closeAll}
-        showBattle={showBattle}
-        battleMonsterId={battleMonsterId}
-        onBattleEnd={handleBattleEnd}
-        onBattle={handleBattle}
-        showQuest={showQuest}
-        onCloseQuest={closeAll}
-      />
-      <BottomBar
-        onOpenBag={() => {
-          closeAll()
-          setShowBag(true)
-        }}
-        onOpenCultivate={() => {
-          closeAll()
-          setShowCultivate(true)
-        }}
-        onOpenExplore={() => {
-          closeAll()
-          setShowExplore(true)
-        }}
-        onOpenQuest={() => {
-          closeAll()
-          setShowQuest(true)
-        }}
-      />
+      <TopBar onClose={activePanel ? handleClose : undefined} />
+      <ContentArea>{renderContent()}</ContentArea>
     </div>
   )
 }

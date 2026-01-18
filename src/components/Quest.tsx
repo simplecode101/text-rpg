@@ -5,15 +5,10 @@ import { useBagStore } from '../stores/bagStore'
 import { useItemLibraryStore } from '../stores/itemLibraryStore'
 import { Button } from './ui/button'
 import { Card, CardContent } from './ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
+import { Tabs, TabsList, TabsTrigger } from './ui/tabs'
 import { Progress } from './ui/progress'
-import { Badge } from './ui/badge'
 
-interface QuestProps {
-  onClose: () => void
-}
-
-function Quest({ onClose }: QuestProps) {
+function Quest() {
   const player = usePlayerStore()
   const questStore = useQuestStore()
   const bag = useBagStore()
@@ -135,13 +130,6 @@ function Quest({ onClose }: QuestProps) {
             <TabsTrigger value="completed">已完成 ({completedQuests.length})</TabsTrigger>
           </TabsList>
         </Tabs>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onClose}
-        >
-          ✕
-        </Button>
       </div>
 
       {/* 任务列表 */}

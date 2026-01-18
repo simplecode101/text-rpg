@@ -3,10 +3,6 @@ import { usePlayerStore } from '../stores/playerStore'
 import { Button } from './ui/button'
 import { ScrollArea } from './ui/scroll-area'
 
-interface CultivateProps {
-  onClose: () => void
-}
-
 interface Log {
   id: number
   message: string
@@ -14,7 +10,7 @@ interface Log {
   type?: 'normal' | 'breakthrough' | 'failed'
 }
 
-function Cultivate({ onClose }: CultivateProps) {
+function Cultivate() {
   const player = usePlayerStore()
   const [logs, setLogs] = useState<Log[]>([])
   const [isCultivating, setIsCultivating] = useState(false)
@@ -125,13 +121,6 @@ function Cultivate({ onClose }: CultivateProps) {
             <span className="font-medium">经验:</span> {player.exp}/{player.maxExp}
           </div>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onClose}
-        >
-          ✕
-        </Button>
       </div>
 
       {/* 灵感状态提示 */}

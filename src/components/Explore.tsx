@@ -7,7 +7,6 @@ import { Button } from './ui/button'
 import { ScrollArea } from './ui/scroll-area'
 
 interface ExploreProps {
-  onClose: () => void
   onBattle: (monsterId: string) => void
 }
 
@@ -20,7 +19,7 @@ interface Log {
   type: 'info' | 'success' | 'danger' | 'warning'
 }
 
-function Explore({ onClose, onBattle }: ExploreProps) {
+function Explore({ onBattle }: ExploreProps) {
   const player = usePlayerStore()
   const bag = useBagStore()
   const itemLibrary = useItemLibraryStore()
@@ -134,21 +133,12 @@ function Explore({ onClose, onBattle }: ExploreProps) {
   return (
     <div className="flex flex-col h-full">
       {/* 探索信息 */}
-      <div className="flex items-center justify-between p-4 border-b border-black/12">
-        <div>
-          <h3 className="text-lg font-medium mb-2 text-neutral-700">探索系统</h3>
-          <div className="text-sm text-black/60">
-            <div>剩余探索次数: {player.getRemainingExplores()}/{player.maxDailyExplores}</div>
-            <div>每日探索次数会在0点重置</div>
-          </div>
+      <div className="p-4 border-b border-black/12">
+        <h3 className="text-lg font-medium mb-2 text-neutral-700">探索系统</h3>
+        <div className="text-sm text-black/60">
+          <div>剩余探索次数: {player.getRemainingExplores()}/{player.maxDailyExplores}</div>
+          <div>每日探索次数会在0点重置</div>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onClose}
-        >
-          ✕
-        </Button>
       </div>
 
       {/* 日志区域 */}

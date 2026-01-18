@@ -1,12 +1,15 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { usePlayerStore } from '../stores/playerStore'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Badge } from './ui/badge'
+import { X } from 'lucide-react'
 
-function TopBar() {
-  const navigate = useNavigate()
+interface TopBarProps {
+  onClose?: () => void
+}
+
+function TopBar({ onClose }: TopBarProps) {
   const player = usePlayerStore()
   const [isEditing, setIsEditing] = useState(false)
   const [editingName, setEditingName] = useState(player.name)
@@ -67,25 +70,12 @@ function TopBar() {
         <Badge variant="secondary" className="bg-purple-600/10 text-purple-800 hover:bg-purple-600/20">
           寿命: {player.lifespan.toFixed(1)}年
         </Badge>
-        <Badge variant="secondary" className="bg-red-500/10 text-red-800 hover:bg-red-500/20">
-          HP: {player.hp}/{player.maxHp}
-        </Badge>
-        <Badge variant="secondary" className="bg-blue-500/10 text-blue-800 hover:bg-blue-500/20">
-          MP: {player.mp}/{player.maxMp}
-        </Badge>
-        <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-700 hover:bg-yellow-500/20">
-          {player.gold} G
-        </Badge>
-        <Badge variant="secondary" className="bg-orange-500/10 text-orange-700 hover:bg-orange-500/20">
-          ⚔ {player.attack}
-        </Badge>
-        <Badge variant="secondary" className="bg-gray-500/10 text-gray-700 hover:bg-gray-500/20">
-          🛡 {player.defense}
-        </Badge>
+        {onClose && (
+          <Button variant="ghost" size="icon" onClick={onClose}>
+            <X className="w-5 h-5" />
+          </Button>
+        )}
       </div>
-      <Button size="sm" variant="destructive" onClick={() => navigate('/home')}>
-        退出
-      </Button>
     </div>
   )
 }
